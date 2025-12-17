@@ -148,8 +148,8 @@ npm start
 
 ## 👨‍💻 Author
 
-**MOhd Rakhshan Khan**
-Software Engineer | Backend & Automation Enthusiast
+**Mohd Rakhshan Khan**
+| Software Engineer | Backend & Automation | Enthusiast
 
 ---
 
