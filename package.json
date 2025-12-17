@@ -1,0 +1,23 @@
+{
+  "name": "jobflow-automator",
+  "version": "1.0.0",
+  "description": "An automated job application platform that scrapes job listings, monitors hiring posts, auto-applies to jobs, and optimizes resumes using Agile methodology.",
+  "keywords": [
+    "job",
+    "automation",
+    "web",
+    "scraping",
+    "nodejs",
+    "puppeteer",
+    "agile",
+    "backend"
+  ],
+  "license": "MIT",
+  "author": "Mohd Rakhshan Khan",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "npm test",
+    "start": "node server.js"
+  }
+}
