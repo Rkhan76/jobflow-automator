@@ -29,6 +29,19 @@ paths:
     post:
       summary: Login with email and password
       tags: [Auth]
+
+      parameters:
+        - in: header
+          name: X-Client-Type
+          schema:
+            type: string
+            enum: [mobile]
+          required: false
+          description: >
+            Set to "mobile" for mobile clients.
+            If not provided, server treats request as browser
+            and sets HTTP-only cookie.
+
       requestBody:
         required: true
         content:
@@ -41,9 +54,30 @@ paths:
                   type: string
                 password:
                   type: string
+
       responses:
         "200":
           description: Login successful
+          headers:
+            Set-Cookie:
+              description: HTTP-only cookie containing JWT (browser clients only)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                    nullable: true
+                    description: Present only for mobile clients
+                  user:
+                    type: object
+        "401":
+          description: Invalid credentials
 
   /auth/google:
     post:
