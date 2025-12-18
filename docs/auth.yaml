@@ -1,3 +1,8 @@
+openapi: 3.0.0
+info:
+  title: JobFlow Automator API
+  version: 1.0.0
+
 tags:
   - name: Auth
     description: Authentication related APIs
@@ -81,11 +86,71 @@ paths:
 
   /auth/google:
     post:
-      summary: Google authentication
+      summary: Google signup / login
+      description: >
+        Authenticates user using Google ID token.
+        If user does not exist, a new account is created.
+        If user exists, user is logged in.
       tags: [Auth]
+
+      parameters:
+        - in: header
+          name: X-Client-Type
+          schema:
+            type: string
+            enum: [mobile]
+          required: false
+          description: >
+            Set to "mobile" for mobile clients.
+            If not provided, server treats request as browser
+            and sets HTTP-only cookie.
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  description: Google ID token obtained from Google Sign-In
+
       responses:
         "200":
-          description: Google auth successful
+          description: Google authentication successful
+          headers:
+            Set-Cookie:
+              description: HTTP-only cookie containing JWT (browser clients only)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  token:
+                    type: string
+                    nullable: true
+                    description: Present only for mobile clients
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      email:
+                        type: string
+                      authProvider:
+                        type: string
+                        example: google
+        "401":
+          description: Google authentication failed
 
   /auth/github:
     post:

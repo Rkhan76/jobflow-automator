@@ -1,6 +1,10 @@
 import User from '../models/user.model.js'
 import bcrypt from 'bcrypt'
 import { generateToken } from '../utils/token.js'
+import { OAuth2Client } from 'google-auth-library'
+import jwt from 'jsonwebtoken'
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 /* =========================
    Register (Email + Password)
@@ -86,33 +90,61 @@ export const loginUser = async (req, res) => {
 /* =========================
    Google Auth
 ========================= */
+/* =========================
+   Google Auth (Browser + Mobile)
+========================= */
 export const googleAuth = async (req, res) => {
   try {
-    const { googleId, email, name, avatar } = req.body
+    const { token } = req.body // Google ID token from frontend
 
-    if (!googleId || !email) {
-      return res.status(400).json({ message: 'Invalid Google data' })
-    }
 
-    let user = await User.findOne({ googleId })
+    // ✅ Verify Google token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    })
 
+    const payload = ticket.getPayload()
+    const { email, name, picture, sub: googleId } = payload
+
+    // 🔍 Check if user exists
+    let user = await User.findOne({ email })
+
+    // 🆕 Signup if not exists
     if (!user) {
       user = await User.create({
         name,
         email,
-        avatar,
         googleId,
+        avatar: picture,
         authProvider: 'google',
-        isEmailVerified: true,
       })
     }
 
-    res.json({
-      token: generateToken(user._id),
+    // 🔐 Generate JWT
+    const jwtToken = generateToken(user._id)
+
+    // Detect client type
+    const isMobileClient = req.headers['x-client-type'] === 'mobile'
+
+    // 🌐 Browser → set httpOnly cookie
+    if (!isMobileClient) {
+      res.cookie('access_token', jwtToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      })
+    }
+
+    // 📱 Mobile → return token in response
+    res.status(200).json({
+      success: true,
+      token: isMobileClient ? jwtToken : undefined,
       user,
     })
-  } catch (error) {
-    res.status(500).json({ message: 'Google authentication failed' })
+  } catch (err) {
+    res.status(401).json({ message: 'Google authentication failed' })
   }
 }
 

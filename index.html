@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Google Auth Test</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 40px;
+      }
+      #googleBtn {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>Sign up with Google</h2>
+
+    <!-- Google Button -->
+    <div
+      id="g_id_onload"
+      data-client_id="343161576366-rf2dd4232rl6vu7gos0t6le7or6467gr.apps.googleusercontent.com"
+      data-callback="handleCredentialResponse"
+      data-auto_prompt="false">
+    </div>
+
+    <div
+      class="g_id_signin"
+      data-type="standard"
+      data-shape="rectangular"
+      data-theme="outline"
+      data-text="signup_with"
+      data-size="large"
+      data-logo_alignment="left">
+    </div>
+
+    <script>
+      function handleCredentialResponse(response) {
+        console.log("✅ Google ID Token:");
+        console.log(response.credential);
+
+        alert("Google token printed in console.\nNow paste it into Swagger.");
+      }
+    </script>
+  </body>
+</html>
