@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import { generateToken } from '../utils/token.js'
 import { OAuth2Client } from 'google-auth-library'
 import jwt from 'jsonwebtoken'
+import axios from "axios";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
@@ -151,34 +152,103 @@ export const googleAuth = async (req, res) => {
 /* =========================
    GitHub Auth
 ========================= */
+
 export const githubAuth = async (req, res) => {
   try {
-    const { githubId, email, name, avatar } = req.body
+    const { accessToken } = req.body;
 
-    if (!githubId) {
-      return res.status(400).json({ message: 'Invalid GitHub data' })
+    if (!accessToken) {
+      return res.status(400).json({ message: "GitHub access token required" });
     }
 
-    let user = await User.findOne({ githubId })
+    // 1️⃣ Fetch GitHub user profile
+    const githubUserResponse = await axios.get("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github+json",
+      },
+    });
+
+    const {
+      id: githubId,
+      name,
+      avatar_url: avatar,
+      email,
+    } = githubUserResponse.data;
+
+    // 2️⃣ Fetch email if not public
+    let userEmail = email;
+
+    if (!userEmail) {
+      const emailResponse = await axios.get(
+        "https://api.github.com/user/emails",
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: "application/vnd.github+json",
+          },
+        }
+      );
+
+      const primaryEmail = emailResponse.data.find(
+        (e) => e.primary && e.verified
+      );
+
+      userEmail = primaryEmail?.email;
+    }
+
+    if (!userEmail) {
+      return res
+        .status(400)
+        .json({ message: "GitHub email not found or not verified" });
+    }
+
+    // 3️⃣ Find user by email first (account linking)
+    let user = await User.findOne({ email: userEmail });
 
     if (!user) {
       user = await User.create({
-        name,
-        email,
+        name: name || "GitHub User",
+        email: userEmail,
         avatar,
         githubId,
-        authProvider: 'github',
-      })
+        authProvider: "github",
+      });
+    } else if (!user.githubId) {
+      // Link GitHub to existing account
+      user.githubId = githubId;
+      await user.save();
     }
 
-    res.json({
-      token: generateToken(user._id),
+    // 4️⃣ Generate JWT
+    const jwtToken = generateToken(user._id);
+
+    // Detect client type
+    const isMobileClient = req.headers["x-client-type"] === "mobile";
+
+    // 🌐 Browser → httpOnly cookie
+    if (!isMobileClient) {
+      res.cookie("access_token", jwtToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+    }
+
+    // 📱 Mobile → token in response
+    res.status(200).json({
+      success: true,
+      token: isMobileClient ? jwtToken : undefined,
       user,
-    })
+    });
   } catch (error) {
-    res.status(500).json({ message: 'GitHub authentication failed' })
+    console.error(error.response?.data || error.message);
+    res.status(500).json({ message: "GitHub authentication failed" });
   }
-}
+};
+
+
 
 /* =========================
    Get Current User
