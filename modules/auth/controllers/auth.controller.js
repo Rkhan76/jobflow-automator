@@ -2,7 +2,7 @@ import User from '../models/user.model.js'
 import bcrypt from 'bcrypt'
 import { generateToken } from '../utils/token.js'
 import { OAuth2Client } from 'google-auth-library'
-import jwt from 'jsonwebtoken'
+
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
