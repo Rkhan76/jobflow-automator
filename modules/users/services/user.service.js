@@ -173,19 +173,56 @@ export const deleteSkillsBulk = async (userId, skillIds) => {
 export const addExperience = async (userId, experience) => {
   const profile = await ensureUserProfileExists(userId)
 
+  // ✅ Ensure only ONE current experience
+  if (experience.isCurrent) {
+    profile.experience.forEach((exp) => {
+      exp.isCurrent = false
+      exp.endDate = exp.endDate || new Date()
+    })
+  }
+
   profile.experience.push(experience)
   await profile.save()
 
   return profile.experience
 }
 
+
 export const updateExperience = async (userId, experienceId, payload) => {
   const profile = await ensureUserProfileExists(userId)
 
   const exp = profile.experience.id(experienceId)
+  if (!exp) throw new Error('Experience not found')
 
-  if (!exp) {
-    throw new Error('Experience not found')
+  // Merge existing + payload
+  const merged = {
+    isCurrent: exp.isCurrent,
+    startDate: exp.startDate,
+    endDate: exp.endDate,
+    ...payload,
+  }
+
+  // 🔴 BUSINESS RULES (MERGED STATE)
+  if (merged.isCurrent && merged.endDate) {
+    throw new Error('endDate must not exist for current experience')
+  }
+
+  if (!merged.isCurrent && !merged.endDate) {
+    throw new Error('endDate is required for non-current experience')
+  }
+
+  if (merged.endDate && merged.endDate < merged.startDate) {
+    throw new Error('endDate cannot be before startDate')
+  }
+
+  // Ensure only one current job
+  if (payload.isCurrent === true) {
+    profile.experience.forEach((e) => {
+      if (e._id.toString() !== experienceId) {
+        e.isCurrent = false
+        e.endDate = e.endDate || new Date()
+      }
+    })
   }
 
   Object.assign(exp, payload)
@@ -193,6 +230,8 @@ export const updateExperience = async (userId, experienceId, payload) => {
 
   return profile.experience
 }
+
+
 
 export const deleteExperience = async (userId, experienceId) => {
   const profile = await ensureUserProfileExists(userId)

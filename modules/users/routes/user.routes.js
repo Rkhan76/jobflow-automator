@@ -21,6 +21,7 @@ import {
   addSkillSchema,
   deleteSkillsBulkSchema,
 } from '../validators/skill.schema.js'
+import { createExperienceSchema, updateExperienceSchema } from '../validators/experience.schema.js'
 
 
 
@@ -96,23 +97,24 @@ router.delete(
  */
 
 // Add experience
-// router.post(
-//   '/me/experience',
-//   authenticate,
-//   validate(experienceSchema),
-//   addExperience
-// )
+router.post(
+  '/me/experience',
+  authMiddleware,
+  validate(createExperienceSchema),
+  addExperience
+)
+
 
 // Update experience
-// router.put(
-//   '/me/experience/:experienceId',
-//   authenticate,
-//   validate(experienceSchema),
-//   updateExperience
-// )
+router.put(
+  '/me/experience/:experienceId',
+  authMiddleware,
+  validate(updateExperienceSchema),
+  updateExperience
+)
 
 // Delete experience
-// router.delete('/me/experience/:experienceId', authenticate, deleteExperience)
+router.delete('/me/experience/:experienceId', authMiddleware, deleteExperience)
 
 /**
  * =============================
