@@ -1,4 +1,5 @@
 openapi: 3.0.0
+
 info:
   title: JobFlow Automator API
   version: 1.0.0
@@ -6,6 +7,18 @@ info:
 tags:
   - name: Auth
     description: Authentication related APIs
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
 
 paths:
   /auth/register:
@@ -34,7 +47,6 @@ paths:
     post:
       summary: Login with email and password
       tags: [Auth]
-
       parameters:
         - in: header
           name: X-Client-Type
@@ -46,7 +58,6 @@ paths:
             Set to "mobile" for mobile clients.
             If not provided, server treats request as browser
             and sets HTTP-only cookie.
-
       requestBody:
         required: true
         content:
@@ -59,7 +70,6 @@ paths:
                   type: string
                 password:
                   type: string
-
       responses:
         "200":
           description: Login successful
@@ -92,7 +102,6 @@ paths:
         If user does not exist, a new account is created.
         If user exists, user is logged in.
       tags: [Auth]
-
       parameters:
         - in: header
           name: X-Client-Type
@@ -104,7 +113,6 @@ paths:
             Set to "mobile" for mobile clients.
             If not provided, server treats request as browser
             and sets HTTP-only cookie.
-
       requestBody:
         required: true
         content:
@@ -116,7 +124,6 @@ paths:
                 token:
                   type: string
                   description: Google ID token obtained from Google Sign-In
-
       responses:
         "200":
           description: Google authentication successful
@@ -132,23 +139,11 @@ paths:
                 properties:
                   success:
                     type: boolean
-                    example: true
                   token:
                     type: string
                     nullable: true
-                    description: Present only for mobile clients
                   user:
                     type: object
-                    properties:
-                      id:
-                        type: string
-                      name:
-                        type: string
-                      email:
-                        type: string
-                      authProvider:
-                        type: string
-                        example: google
         "401":
           description: Google authentication failed
 
@@ -163,9 +158,27 @@ paths:
   /auth/me:
     get:
       summary: Get current logged-in user
+      description: >
+        Returns the currently authenticated user.
+
+        Authentication methods:
+        - Mobile: Use Authorization header (Bearer token).
+          Click the "Authorize" button in Swagger UI.
+        - Browser: Login first to set HTTP-only cookie (access_token).
+          Cookie is sent automatically by the browser.
       tags: [Auth]
       security:
         - bearerAuth: []
+        - cookieAuth: []
       responses:
         "200":
           description: Current user data
+          schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  description: middleware
+        "401":
+          description: Unauthorized

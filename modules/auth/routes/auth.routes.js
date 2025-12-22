@@ -6,7 +6,7 @@ import {
   githubAuth,
   getCurrentUser,
 } from '../controllers/auth.controller.js'
-// import { protect } from "../middlewares/authMiddleware.js"
+// import {authMiddleware} from '../middlewares/auth.middleware.js'
 
 const router = express.Router()
 
@@ -14,6 +14,6 @@ router.post('/register', registerUser)
 router.post('/login', loginUser)
 router.post('/google', googleAuth)
 router.post('/github', githubAuth)
-// router.get("/me", protect, getCurrentUser);
+// router.get('/me', authMiddleware, getCurrentUser)
 
 export default router

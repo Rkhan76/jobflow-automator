@@ -1,4 +1,4 @@
-import User from '../models/user.model.js'
+import User from '../../users/models/user.model.js'
 import bcrypt from 'bcrypt'
 import { generateToken } from '../utils/token.js'
 import { OAuth2Client } from 'google-auth-library'
@@ -64,18 +64,18 @@ export const loginUser = async (req, res) => {
 
     const token = generateToken(user._id)
 
+
     // Detect client type
     const isMobileClient = req.headers['x-client-type'] === 'mobile'
 
     // 🌐 Browser → send cookie
-    if (!isMobileClient) {
-      res.cookie('access_token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      })
-    }
+   res.cookie('access_token', token, {
+     httpOnly: true,
+     secure: false, // http
+     sameSite: 'lax',
+     maxAge: 7 * 24 * 60 * 60 * 1000,
+   })
+
 
     // 📱 Mobile → send token in response
     res.status(200).json({
@@ -97,7 +97,6 @@ export const loginUser = async (req, res) => {
 export const googleAuth = async (req, res) => {
   try {
     const { token } = req.body // Google ID token from frontend
-
 
     // ✅ Verify Google token
     const ticket = await client.verifyIdToken({
