@@ -10,20 +10,19 @@ import {
   updateExperience,
   deleteExperience,
   getUserDashboardData,
+  addSkillsBulk,
+  deleteSkillsBulk,
 } from '../controllers/user.controller.js'
 import { authMiddleware } from '../../auth/middlewares/auth.middleware.js'
 import { updatePreferencesSchema } from '../validators/preferences.schema.js'
 import { validate } from '../middlewares/validate.middleware.js'
-import { addSkillSchema } from '../validators/skill.schema.js'
+import {
+  addSkillsBulkSchema,
+  addSkillSchema,
+  deleteSkillsBulkSchema,
+} from '../validators/skill.schema.js'
 
-// import { authenticate } from '../../auth/middlewares/auth.middleware.js'
-// import { validate } from '../middlewares/user.middleware.js'
-// import {
-//   updateProfileSchema,
-//   updatePreferencesSchema,
-//   skillSchema,
-//   experienceSchema,
-// } from '../validators/user.schema.js'
+
 
 const router = Router()
 
@@ -65,10 +64,30 @@ router.put(
 // Add a skill
 router.post('/me/skills', authMiddleware, validate(addSkillSchema), addSkill)
 
-// Remove a skill
-router.delete('/me/skills/:skillId', authMiddleware, removeSkill)
+// Add multiple skills at once
+router.post(
+  '/me/skills/bulk',
+  authMiddleware,
+  validate(addSkillsBulkSchema),
+  addSkillsBulk
+)
 
-// /users/me/skills/bulk
+// ✅ BULK DELETE FIRST (STATIC)
+router.delete(
+  '/me/skills/bulk',
+  authMiddleware,
+  validate(deleteSkillsBulkSchema),
+  deleteSkillsBulk
+)
+
+// ❌ SINGLE DELETE AFTER (DYNAMIC)
+router.delete(
+  '/me/skills/:skillId',
+  authMiddleware,
+  removeSkill
+)
+
+
 
 /**
  * =============================

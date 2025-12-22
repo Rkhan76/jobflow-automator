@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'
 import User from '../../users/models/user.model.js'
 
 export const authMiddleware = async (req, res, next) => {
-
+  
   try {
     let token
 

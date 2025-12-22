@@ -99,6 +99,39 @@ export const addSkill = async (userId, skill) => {
   return profile.skills
 }
 
+export const addSkillsBulk = async (userId, skills) => {
+  const profile = await ensureUserProfileExists(userId)
+
+  // Existing skill names (case-insensitive)
+  const existingSkillNames = new Set(
+    profile.skills.map((s) => s.name.toLowerCase())
+  )
+
+  // Remove duplicates from incoming request
+  const uniqueSkills = []
+  const seen = new Set()
+
+  for (const skill of skills) {
+    const name = skill.name.toLowerCase()
+
+    if (existingSkillNames.has(name)) continue
+    if (seen.has(name)) continue
+
+    seen.add(name)
+    uniqueSkills.push(skill)
+  }
+
+  if (uniqueSkills.length === 0) {
+    throw new Error('All skills already exist')
+  }
+
+  profile.skills.push(...uniqueSkills)
+  await profile.save()
+
+  return profile.skills
+}
+
+
 export const removeSkill = async (userId, skillId) => {
   const profile = await ensureUserProfileExists(userId)
 
@@ -110,6 +143,26 @@ export const removeSkill = async (userId, skillId) => {
 
   return profile.skills
 }
+
+export const deleteSkillsBulk = async (userId, skillIds) => {
+  
+  const profile = await ensureUserProfileExists(userId)
+
+  const initialCount = profile.skills.length
+
+  profile.skills = profile.skills.filter(
+    (skill) => !skillIds.includes(skill._id.toString())
+  )
+
+  if (profile.skills.length === initialCount) {
+    throw new Error('No matching skills found')
+  }
+
+  await profile.save()
+
+  return profile.skills
+}
+
 
 /**
  * =========================

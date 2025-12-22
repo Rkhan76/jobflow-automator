@@ -112,6 +112,25 @@ export const addSkill = async (req, res, next) => {
   }
 }
 
+// POST /users//me/skills/bulk
+export const addSkillsBulk = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const { skills } = req.body
+
+    const updatedSkills = await userService.addSkillsBulk(userId, skills)
+
+    res.status(201).json({
+      success: true,
+      message: 'Skills added successfully',
+      data: updatedSkills,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+
 
 // DELETE /users/me/skills/:skillId
 export const removeSkill = async (req, res, next) => {
@@ -130,6 +149,28 @@ export const removeSkill = async (req, res, next) => {
     next(error)
   }
 }
+
+// DELETE /users/me/skills/bult
+export const deleteSkillsBulk = async (req, res, next) => {
+ 
+  try {
+    
+    const userId = req.user.id
+    const { skillIds } = req.body
+
+
+    const skills = await userService.deleteSkillsBulk(userId, skillIds)
+
+    return res.status(200).json({
+      success: true,
+      message: 'Skills deleted successfully',
+      data: skills,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 
 /**
  * =========================
