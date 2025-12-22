@@ -31,7 +31,6 @@ export const authMiddleware = async (req, res, next) => {
     // 🔐 Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-    console.log(decoded, " decoded token")
 
     // 🔍 Optional: fetch user (recommended)
     const user = await User.findById(decoded.userId).select('-password')

@@ -31,7 +31,7 @@ const router = Router()
  */
 
 // Get logged-in user's profile
-// router.get('/me', authenticate, getMyProfile)
+router.get('/me', authMiddleware, getMyProfile)
 
 // Update profile (name, bio, location, etc.)
 router.put('/me',authMiddleware, updateMyProfile)
