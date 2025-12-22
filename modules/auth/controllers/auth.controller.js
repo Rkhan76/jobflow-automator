@@ -154,16 +154,48 @@ export const googleAuth = async (req, res) => {
 
 export const githubAuth = async (req, res) => {
   try {
-    const { accessToken } = req.body;
+  
 
-    if (!accessToken) {
-      return res.status(400).json({ message: "GitHub access token required" });
+    const { code } = req.body;
+  
+
+    if (!code) {
+      return res
+        .status(400)
+        .json({ message: "GitHub authorization code required" });
     }
 
-    // 1️⃣ Fetch GitHub user profile
+    /* --------------------------------------------------
+       1️⃣ Exchange CODE → ACCESS TOKEN (SECURE)
+    -------------------------------------------------- */
+    const tokenResponse = await axios.post(
+      "https://github.com/login/oauth/access_token",
+      {
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code,
+      },
+      {
+        headers: {
+          Accept: "application/json",
+        },
+      }
+    );
+
+    const { access_token } = tokenResponse.data;
+
+    if (!access_token) {
+      return res
+        .status(400)
+        .json({ message: "Failed to obtain GitHub access token" });
+    }
+
+    /* --------------------------------------------------
+       2️⃣ Fetch GitHub USER PROFILE
+    -------------------------------------------------- */
     const githubUserResponse = await axios.get("https://api.github.com/user", {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${access_token}`,
         Accept: "application/vnd.github+json",
       },
     });
@@ -175,7 +207,9 @@ export const githubAuth = async (req, res) => {
       email,
     } = githubUserResponse.data;
 
-    // 2️⃣ Fetch email if not public
+    /* --------------------------------------------------
+       3️⃣ Fetch EMAIL if not public
+    -------------------------------------------------- */
     let userEmail = email;
 
     if (!userEmail) {
@@ -183,7 +217,7 @@ export const githubAuth = async (req, res) => {
         "https://api.github.com/user/emails",
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${access_token}`,
             Accept: "application/vnd.github+json",
           },
         }
@@ -202,7 +236,9 @@ export const githubAuth = async (req, res) => {
         .json({ message: "GitHub email not found or not verified" });
     }
 
-    // 3️⃣ Find user by email first (account linking)
+    /* --------------------------------------------------
+       4️⃣ CREATE or LINK USER
+    -------------------------------------------------- */
     let user = await User.findOne({ email: userEmail });
 
     if (!user) {
@@ -214,18 +250,18 @@ export const githubAuth = async (req, res) => {
         authProvider: "github",
       });
     } else if (!user.githubId) {
-      // Link GitHub to existing account
       user.githubId = githubId;
       await user.save();
     }
 
-    // 4️⃣ Generate JWT
+    /* --------------------------------------------------
+       5️⃣ Generate JWT
+    -------------------------------------------------- */
     const jwtToken = generateToken(user._id);
 
-    // Detect client type
     const isMobileClient = req.headers["x-client-type"] === "mobile";
 
-    // 🌐 Browser → httpOnly cookie
+    // 🌐 Web → httpOnly cookie
     if (!isMobileClient) {
       res.cookie("access_token", jwtToken, {
         httpOnly: true,
@@ -246,7 +282,6 @@ export const githubAuth = async (req, res) => {
     res.status(500).json({ message: "GitHub authentication failed" });
   }
 };
-
 
 
 /* =========================

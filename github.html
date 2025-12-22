@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>GitHub OAuth Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: #161b22;
+            padding: 30px;
+            border-radius: 10px;
+            width: 380px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+        }
+
+        button {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background: #2ea043;
+        }
+
+        pre {
+            background: #0d1117;
+            padding: 12px;
+            margin-top: 15px;
+            text-align: left;
+            overflow-x: auto;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .success {
+            color: #3fb950;
+        }
+
+        .error {
+            color: #f85149;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Login with GitHub</h2>
+        <button onclick="loginWithGithub()">Continue with GitHub</button>
+        <div id="status"></div>
+        <pre id="response"></pre>
+    </div>
+
+    <script>
+        const CLIENT_ID = "Ov23liYlSX7w9l6l8jnU";
+
+        // ✅ This MUST be your backend API
+        const BACKEND_API = "http://localhost:5000/api/auth/github";
+
+        // ✅ Frontend page GitHub redirects to
+        const FRONTEND_REDIRECT = "http://localhost:5500/github.html";
+
+        /* --------------------------------------------------
+           STEP 1: Redirect user to GitHub
+        -------------------------------------------------- */
+        function loginWithGithub() {
+            const githubAuthURL =
+                `https://github.com/login/oauth/authorize` +
+                `?client_id=${CLIENT_ID}` +
+                `&redirect_uri=${encodeURIComponent(FRONTEND_REDIRECT)}` +
+                `&scope=user:email`;
+
+            window.location.href = githubAuthURL;
+        }
+
+        /* --------------------------------------------------
+           STEP 2: Handle GitHub redirect
+        -------------------------------------------------- */
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get("code");
+
+        if (code) {
+            document.getElementById("status").innerHTML =
+                "<p>Authorizing with backend...</p>";
+
+            fetch(BACKEND_API, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                // credentials: "include", // REQUIRED for httpOnly cookies
+                body: JSON.stringify({ code })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("status").innerHTML =
+                        "<p class='success'>Login successful 🎉</p>";
+
+                    document.getElementById("response").textContent =
+                        JSON.stringify(data, null, 2);
+
+                    // Optional: clean URL (remove ?code=...)
+                    window.history.replaceState({}, document.title, FRONTEND_REDIRECT);
+                })
+                .catch(err => {
+                    document.getElementById("status").innerHTML =
+                        "<p class='error'>Login failed ❌</p>";
+
+                    document.getElementById("response").textContent = err.toString();
+                });
+        }
+    </script>
+
+</body>
+
+</html>
