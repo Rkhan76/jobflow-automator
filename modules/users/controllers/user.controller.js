@@ -72,14 +72,13 @@ export const getPreferences = async (req, res, next) => {
 export const updatePreferences = async (req, res, next) => {
   try {
     const userId = req.user.id
-    const preferences = req.body
 
     const updatedPreferences = await userService.updateUserPreferences(
       userId,
-      preferences
+      req.body
     )
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: 'Preferences updated successfully',
       data: updatedPreferences,
@@ -88,6 +87,7 @@ export const updatePreferences = async (req, res, next) => {
     next(error)
   }
 }
+
 
 /**
  * =========================

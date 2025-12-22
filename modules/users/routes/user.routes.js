@@ -12,6 +12,8 @@ import {
   getUserDashboardData,
 } from '../controllers/user.controller.js'
 import { authMiddleware } from '../../auth/middlewares/auth.middleware.js'
+import { updatePreferencesSchema } from '../validators/preferences.schema.js'
+import { validate } from '../middlewares/validate.middleware.js'
 
 // import { authenticate } from '../../auth/middlewares/auth.middleware.js'
 // import { validate } from '../middlewares/user.middleware.js'
@@ -43,15 +45,15 @@ router.put('/me',authMiddleware, updateMyProfile)
  */
 
 // Get user job preferences
-// router.get('/me/preferences', authenticate, getPreferences)
+router.get('/me/preferences', authMiddleware, getPreferences)
 
 // Update job preferences
-// router.put(
-//   '/me/preferences',
-//   authenticate,
-//   validate(updatePreferencesSchema),
-//   updatePreferences
-// )
+router.put(
+  '/me/preferences',
+  authMiddleware,
+  validate(updatePreferencesSchema),
+  updatePreferences
+)
 
 /**
  * =============================
