@@ -14,6 +14,7 @@ import {
 import { authMiddleware } from '../../auth/middlewares/auth.middleware.js'
 import { updatePreferencesSchema } from '../validators/preferences.schema.js'
 import { validate } from '../middlewares/validate.middleware.js'
+import { addSkillSchema } from '../validators/skill.schema.js'
 
 // import { authenticate } from '../../auth/middlewares/auth.middleware.js'
 // import { validate } from '../middlewares/user.middleware.js'
@@ -62,10 +63,12 @@ router.put(
  */
 
 // Add a skill
-// router.post('/me/skills', authenticate, validate(skillSchema), addSkill)
+router.post('/me/skills', authMiddleware, validate(addSkillSchema), addSkill)
 
 // Remove a skill
-// router.delete('/me/skills/:skillId', authenticate, removeSkill)
+router.delete('/me/skills/:skillId', authMiddleware, removeSkill)
+
+// /users/me/skills/bulk
 
 /**
  * =============================

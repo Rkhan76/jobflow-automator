@@ -99,11 +99,10 @@ export const updatePreferences = async (req, res, next) => {
 export const addSkill = async (req, res, next) => {
   try {
     const userId = req.user.id
-    const skill = req.body
 
-    const skills = await userService.addSkill(userId, skill)
+    const skills = await userService.addSkill(userId, req.body)
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
       message: 'Skill added successfully',
       data: skills,
@@ -112,6 +111,7 @@ export const addSkill = async (req, res, next) => {
     next(error)
   }
 }
+
 
 // DELETE /users/me/skills/:skillId
 export const removeSkill = async (req, res, next) => {
