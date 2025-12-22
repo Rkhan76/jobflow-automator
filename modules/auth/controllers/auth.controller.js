@@ -62,18 +62,18 @@ export const loginUser = async (req, res) => {
 
     const token = generateToken(user._id)
 
+
     // Detect client type
     const isMobileClient = req.headers['x-client-type'] === 'mobile'
 
     // 🌐 Browser → send cookie
-    if (!isMobileClient) {
-      res.cookie('access_token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      })
-    }
+   res.cookie('access_token', token, {
+     httpOnly: true,
+     secure: false, // http
+     sameSite: 'lax',
+     maxAge: 7 * 24 * 60 * 60 * 1000,
+   })
+
 
     // 📱 Mobile → send token in response
     res.status(200).json({

@@ -11,6 +11,7 @@ import {
   deleteExperience,
   getUserDashboardData,
 } from '../controllers/user.controller.js'
+import { authMiddleware } from '../../auth/middlewares/auth.middleware.js'
 
 // import { authenticate } from '../../auth/middlewares/auth.middleware.js'
 // import { validate } from '../middlewares/user.middleware.js'
@@ -33,7 +34,7 @@ const router = Router()
 // router.get('/me', authenticate, getMyProfile)
 
 // Update profile (name, bio, location, etc.)
-router.put('/me', updateMyProfile)
+router.put('/me',authMiddleware, updateMyProfile)
 
 /**
  * =============================

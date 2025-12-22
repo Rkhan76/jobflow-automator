@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'
 import User from '../../users/models/user.model.js'
 
 export const authMiddleware = async (req, res, next) => {
-  console.log(req)
+
   try {
     let token
 
@@ -30,6 +30,8 @@ export const authMiddleware = async (req, res, next) => {
 
     // 🔐 Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
+
+    console.log(decoded, " decoded token")
 
     // 🔍 Optional: fetch user (recommended)
     const user = await User.findById(decoded.userId).select('-password')

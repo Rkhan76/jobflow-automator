@@ -25,10 +25,8 @@ export const getMyProfile = async (req, res, next) => {
 // PUT /users/me
 export const updateMyProfile = async (req, res, next) => {
   try {
-    // const userId = req.user.id
-  
-console.log('hllo request body ', req.body)
     const { headline, location } = req.body
+    const { _id: userId} = req.user
     
 
     const payload = {
