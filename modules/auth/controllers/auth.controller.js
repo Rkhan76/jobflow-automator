@@ -2,6 +2,8 @@ import User from '../../users/models/user.model.js'
 import bcrypt from 'bcrypt'
 import { generateToken } from '../utils/token.js'
 import { OAuth2Client } from 'google-auth-library'
+import jwt from 'jsonwebtoken'
+import axios from "axios";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
@@ -149,34 +151,138 @@ export const googleAuth = async (req, res) => {
 /* =========================
    GitHub Auth
 ========================= */
+
 export const githubAuth = async (req, res) => {
   try {
-    const { githubId, email, name, avatar } = req.body
+  
 
-    if (!githubId) {
-      return res.status(400).json({ message: 'Invalid GitHub data' })
+    const { code } = req.body;
+  
+
+    if (!code) {
+      return res
+        .status(400)
+        .json({ message: "GitHub authorization code required" });
     }
 
-    let user = await User.findOne({ githubId })
+    /* --------------------------------------------------
+       1️⃣ Exchange CODE → ACCESS TOKEN (SECURE)
+    -------------------------------------------------- */
+    const tokenResponse = await axios.post(
+      "https://github.com/login/oauth/access_token",
+      {
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code,
+      },
+      {
+        headers: {
+          Accept: "application/json",
+        },
+      }
+    );
+
+    const { access_token } = tokenResponse.data;
+
+    if (!access_token) {
+      return res
+        .status(400)
+        .json({ message: "Failed to obtain GitHub access token" });
+    }
+
+    /* --------------------------------------------------
+       2️⃣ Fetch GitHub USER PROFILE
+    -------------------------------------------------- */
+    const githubUserResponse = await axios.get("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        Accept: "application/vnd.github+json",
+      },
+    });
+
+    const {
+      id: githubId,
+      name,
+      avatar_url: avatar,
+      email,
+    } = githubUserResponse.data;
+
+    /* --------------------------------------------------
+       3️⃣ Fetch EMAIL if not public
+    -------------------------------------------------- */
+    let userEmail = email;
+
+    if (!userEmail) {
+      const emailResponse = await axios.get(
+        "https://api.github.com/user/emails",
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+            Accept: "application/vnd.github+json",
+          },
+        }
+      );
+
+      const primaryEmail = emailResponse.data.find(
+        (e) => e.primary && e.verified
+      );
+
+      userEmail = primaryEmail?.email;
+    }
+
+    if (!userEmail) {
+      return res
+        .status(400)
+        .json({ message: "GitHub email not found or not verified" });
+    }
+
+    /* --------------------------------------------------
+       4️⃣ CREATE or LINK USER
+    -------------------------------------------------- */
+    let user = await User.findOne({ email: userEmail });
 
     if (!user) {
       user = await User.create({
-        name,
-        email,
+        name: name || "GitHub User",
+        email: userEmail,
         avatar,
         githubId,
-        authProvider: 'github',
-      })
+        authProvider: "github",
+      });
+    } else if (!user.githubId) {
+      user.githubId = githubId;
+      await user.save();
     }
 
-    res.json({
-      token: generateToken(user._id),
+    /* --------------------------------------------------
+       5️⃣ Generate JWT
+    -------------------------------------------------- */
+    const jwtToken = generateToken(user._id);
+
+    const isMobileClient = req.headers["x-client-type"] === "mobile";
+
+    // 🌐 Web → httpOnly cookie
+    if (!isMobileClient) {
+      res.cookie("access_token", jwtToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+    }
+
+    // 📱 Mobile → token in response
+    res.status(200).json({
+      success: true,
+      token: isMobileClient ? jwtToken : undefined,
       user,
-    })
+    });
   } catch (error) {
-    res.status(500).json({ message: 'GitHub authentication failed' })
+    console.error(error.response?.data || error.message);
+    res.status(500).json({ message: "GitHub authentication failed" });
   }
-}
+};
+
 
 /* =========================
    Get Current User

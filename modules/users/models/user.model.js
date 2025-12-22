@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
@@ -27,16 +27,16 @@ const userSchema = new mongoose.Schema(
     // Authentication provider info
     authProvider: {
       type: String,
-      enum: ['local', 'google', 'github'],
+      enum: ["local", "google", "github"],
       required: true,
-      default: 'local',
+      default: "local",
     },
 
     // Local (email/password) auth
     password: {
       type: String,
       required: function () {
-        return this.authProvider === 'local'
+        return this.authProvider === "local";
       },
     },
 
@@ -49,11 +49,12 @@ const userSchema = new mongoose.Schema(
 
     // GitHub auth data
     githubId: {
-      type: String,
-      unique: true,
-      sparse: true,
+      name: String,
+      email: { type: String, unique: true },
+      avatar: String,
+      githubId: { type: String, unique: true },
+      authProvider: String,
     },
-
     // Account status
     isEmailVerified: {
       type: Boolean,
@@ -63,6 +64,6 @@ const userSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
-)
+);
 
-export default mongoose.model('User', userSchema)
+export default mongoose.model("User", userSchema);
