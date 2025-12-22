@@ -1,8 +1,7 @@
-import User from '../models/user.model.js'
+import User from '../../users/models/user.model.js'
 import bcrypt from 'bcrypt'
 import { generateToken } from '../utils/token.js'
 import { OAuth2Client } from 'google-auth-library'
-
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
@@ -96,7 +95,6 @@ export const loginUser = async (req, res) => {
 export const googleAuth = async (req, res) => {
   try {
     const { token } = req.body // Google ID token from frontend
-
 
     // ✅ Verify Google token
     const ticket = await client.verifyIdToken({
