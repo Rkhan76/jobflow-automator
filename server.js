@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import { globalErrorHandler } from './middlewares/errorMiddleware.js'
 import './modules/scraping/index.js'
+import { initScrapingModule } from './modules/scraping/index.js'
 
 const app = express()
 
@@ -17,6 +18,7 @@ app.use(cors())
 app.use(express.json())
 app.use(cookieParser())
 
+initScrapingModule()
 app.use('/api', routes)
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
