@@ -6,6 +6,7 @@ import swaggerSpec from './config/swagger.js'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import { globalErrorHandler } from './middlewares/errorMiddleware.js'
+import './modules/scraping/index.js'
 
 const app = express()
 
