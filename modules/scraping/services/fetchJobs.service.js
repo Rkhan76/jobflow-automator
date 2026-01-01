@@ -1,13 +1,32 @@
 import { fetchRemotiveJobs } from '../sources/remotive.source.js'
-import { normalizeRemotiveJob } from '../normalizers/job.normalizer.js'
+import { fetchGithubJobs } from '../sources/github.source.js'
+import { fetchWeWorkRemotelyJobs } from '../sources/weworkremotely.source.js'
+
+import {
+  normalizeRemotiveJob,
+  normalizeGithubJob,
+  normalizeWeWorkRemotelyJob,
+} from '../normalizers/job.normalizer.js'
+
 import { saveJobs } from './saveJobs.service.js'
 
-export const fetchAndSaveRemotiveJobs = async () => {
-  console.log('🔄 Fetching Remotive jobs...')
+export const fetchAndSaveAllJobs = async () => {
+  console.log('🔄 Fetching jobs from all sources...')
 
-  const rawJobs = await fetchRemotiveJobs()
-  const normalizedJobs = rawJobs.map(normalizeRemotiveJob)
+  // 1️⃣ Remotive
+  const remotiveRaw = await fetchRemotiveJobs()
+  const remotiveJobs = remotiveRaw.map(normalizeRemotiveJob)
 
-  await saveJobs(normalizedJobs)
+  // 2️⃣ GitHub
+  const githubRaw = await fetchGithubJobs()
+  const githubJobs = githubRaw.map(normalizeGithubJob)
+
+  // 3️⃣ We Work Remotely
+  const wwrRaw = await fetchWeWorkRemotelyJobs()
+  const wwrJobs = wwrRaw.map(normalizeWeWorkRemotelyJob)
+
+  const allJobs = [...remotiveJobs, ...wwrJobs]
+
+  await saveJobs(allJobs)
 }
 

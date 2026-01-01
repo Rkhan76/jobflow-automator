@@ -8,10 +8,11 @@ const JOB_TYPE_MAP = {
   freelance: 'contract',
 }
 
+/* =========================
+   REMOTIVE
+   ========================= */
 export const normalizeRemotiveJob = (raw) => {
   const isEmailApply = raw.url?.startsWith('mailto:')
-
-  const jobType = JOB_TYPE_MAP[raw.job_type] || 'full-time'
 
   const job = {
     title: raw.title,
@@ -21,7 +22,7 @@ export const normalizeRemotiveJob = (raw) => {
       website: raw.company_website,
       logo: raw.company_logo,
     },
-    jobType,
+    jobType: JOB_TYPE_MAP[raw.job_type] || 'full-time',
     location: {
       country: raw.candidate_required_location || 'Worldwide',
       isRemote: true,
@@ -38,6 +39,62 @@ export const normalizeRemotiveJob = (raw) => {
   }
 
   job.hash = generateJobHash(job)
+  return job
+}
 
+/* =========================
+   GITHUB JOBS
+   ========================= */
+export const normalizeGithubJob = (raw) => {
+  const job = {
+    title: raw.title,
+    description: raw.description,
+    company: {
+      name: raw.company,
+      website: raw.company_url,
+    },
+    jobType: 'full-time',
+    location: {
+      country: raw.location || 'Unknown',
+      isRemote: /remote/i.test(raw.location),
+    },
+    application: {
+      method: 'external-link',
+      applyUrl: raw.url,
+    },
+    source: 'api',
+    sourcePostUrl: raw.url,
+    scrapedAt: new Date(),
+  }
+
+  job.hash = generateJobHash(job)
+  return job
+}
+
+/* =========================
+   WE WORK REMOTELY
+   ========================= */
+export const normalizeWeWorkRemotelyJob = (raw) => {
+  const job = {
+    title: raw.title,
+    description: raw.description,
+    company: {
+      name: raw['company'],
+    },
+    jobType: 'full-time',
+    location: {
+      country: 'Remote',
+      isRemote: true,
+    },
+    application: {
+      method: 'external-link',
+      applyUrl: raw.link,
+    },
+    source: 'api',
+    sourcePostUrl: raw.link,
+    scrapedAt: new Date(),
+  }
+
+  job.hash = generateJobHash(job)
   return job
 }
